@@ -1,0 +1,36 @@
+# Vimfile file to test the pandoc-vimwiki filter
+
+The following lists will contain checked checkboxes and unchecked checkboxes.
+
+Bullet list:
+
+* [ ] Not done.
+* [.] Parially done
+    * [ ] Subitem 1
+    * [X] Subitem 2
+    * [ ] Last subitem
+* [o] Half done
+    * [ ] Subitem 1
+    * [X] Subitem 2
+    * [X] Last subitem
+* [O] Almost done
+    * [ ] Subitem 1
+    * [X] Subitem 2
+    * [X] Subitem 3
+    * [X] Last subitem
+* [ ] Also not done.
+
+Ordered list:
+
+1. [o] Done
+     * [ ] Subitem 1 
+     * [X] Subitem 2 
+     * [X] Subitem 3 
+     * [ ] Subitem 4 
+3. [ ] Not done
+4. [X] Also done
+5. [ ] No mark
+
+
+
+A paragraph.
