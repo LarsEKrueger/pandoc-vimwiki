@@ -1,3 +1,7 @@
+---
+author: The Writer
+---
+
 # Vimfile file to test the pandoc-vimwiki filter
 
 The following lists will contain checked checkboxes and unchecked checkboxes.

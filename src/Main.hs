@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns #-}
 module Main
 where
 
@@ -16,6 +15,8 @@ import Text.Pandoc
 import Text.Pandoc.Definition
 import Text.Pandoc.Generic
 import Data.Aeson
+import Data.IORef
+import Data.Map.Lazy as M
 
 prefixAndReplacement :: [([Inline],String)]
 prefixAndReplacement =
@@ -72,30 +73,34 @@ tryFirst (a:as) f = do
        Just _ -> return mbOk
        Nothing -> tryFirst as f
 
-justReadFile :: String -> IO (Maybe [Block])
-justReadFile fn = bracket (openFile fn ReadMode) hClose $ \handle -> do
+justReadFile :: IORef Meta -> String -> IO (Maybe [Block])
+justReadFile metaRef fn = bracket (openFile fn ReadMode) hClose $ \handle -> do
   hSetEncoding handle utf8
-  !cont <- hGetContents handle
+  cont <- hGetContents handle
   case readMarkdown def cont of
       Left _ -> return Nothing
-      Right (Pandoc _ blocks) -> return $ Just blocks
+      Right (Pandoc meta blocks) -> do
+        oldMeta <- readIORef metaRef
+        let newMeta = Meta { unMeta = M.union (unMeta oldMeta) (unMeta meta)}
+        writeIORef metaRef newMeta
+        return $ Just blocks
 
-handleTransclusion :: String -> IO [Block]
-handleTransclusion s = do
+handleTransclusion :: IORef Meta -> String -> IO [Block]
+handleTransclusion metaRef s = do
   let filename = extractLink s
   mbBlocks <- tryFirst extensions $ \ext -> do
     hPutStrLn stderr $ "Trying to load file «" ++ filename ++ ext ++ "»"
-    catchIOError (justReadFile $ filename ++ ext) (\_ -> return Nothing)
+    catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
   case mbBlocks of
        Nothing -> return [Para [Str $ "Error: Could not transclude «" ++ filename ++ "»"]]
        Just blocks -> return blocks
 
-processLinks :: Block -> IO [Block]
-processLinks (Para [Str s]) =
+processLinks :: IORef Meta -> Block -> IO [Block]
+processLinks metaRef (Para [Str s]) =
   if isTransclusion s
-     then handleTransclusion s
+     then handleTransclusion metaRef s
      else return [Para [Str s]]
-processLinks x = return [x]
+processLinks _ x = return [x]
 
 concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
 concatMapM f as = do
@@ -104,12 +109,16 @@ concatMapM f as = do
 
 transclude :: Pandoc -> IO Pandoc
 transclude (Pandoc m bs) = do
-  walked <- concatMapM processLinks bs
-  return $ Pandoc m walked
+  metaRef <- newIORef m
+  walked <- concatMapM (processLinks metaRef) bs
+  finalMeta <- readIORef metaRef
+  return $ Pandoc finalMeta walked
 
 main :: IO ()
-main = BL.getContents >>=
-  (walkM inlineBlocks :: Pandoc -> IO Pandoc) . either error id . eitherDecode' >>=
-  transclude >>=
-  BL.putStr . encode
+main = do
+  txt <- BL.getContents
+  let input = either error id $ eitherDecode' txt
+  transcluded <- transclude input
+  filtered <- walkM inlineBlocks transcluded
+  BL.putStr $ encode filtered
 

@@ -1,3 +1,8 @@
+---
+title: Sub3 title
+---
+
+
 ## This is the third referenced file.
 
-This file is transcluded.
+This file is transcluded with ümläüts and «french quotes».
