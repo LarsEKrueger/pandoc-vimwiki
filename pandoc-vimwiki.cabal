@@ -21,6 +21,7 @@ executable pandoc-vimwiki
   -- other-extensions:    
   build-depends:       base >=4.9 && <4.10,
                        pandoc-types >= 1.16 && < 1.18,
-                       bytestring == 0.10.*
+                       bytestring == 0.10.*,
+                       aeson == 1.0.*
   hs-source-dirs:      src
   default-language:    Haskell2010

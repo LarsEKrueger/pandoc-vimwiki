@@ -2,11 +2,17 @@ module Main
 where
 
 import Text.Pandoc.JSON as J
+import Text.Pandoc.Walk
 import Control.Monad
 import Data.Char
 import System.IO
 import qualified Data.ByteString.Lazy as BL
 import Data.List
+
+
+import Text.Pandoc.Definition
+import Text.Pandoc.Generic
+import Data.Aeson
 
 prefixAndReplacement :: [([Inline],String)]
 prefixAndReplacement =
@@ -34,9 +40,13 @@ inlineItems (Subscript s)  = Subscript $ replacePrefixes s prefixAndReplacement
 inlineItems (SmallCaps s)  = SmallCaps $ replacePrefixes s prefixAndReplacement
 inlineItems x = x
 
-inlineBlocks :: Block -> Block
-inlineBlocks (Plain s) = Plain $ replacePrefixes (map inlineItems s) prefixAndReplacement
-inlineBlocks x = x
+inlineBlocks :: Block -> IO Block
+inlineBlocks (Plain s) = return $ Plain $ replacePrefixes (map inlineItems s) prefixAndReplacement
+inlineBlocks x = return x
 
 main :: IO ()
-main = toJSONFilter inlineBlocks
+main = do
+  input <- BL.getContents
+  filtered <- (walkM inlineBlocks :: Pandoc -> IO Pandoc) $ either error id $ eitherDecode' input
+  BL.putStr $ encode filtered
+
