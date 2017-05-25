@@ -6,8 +6,8 @@ Bullet list:
 
 * [ ] Not done.
 * [.] Parially done
-    * [ ] Subitem 1
-    * [X] Subitem 2
+    * [ ] Subitem 1 [[sub1]]
+    * [X] Subitem 2 [[sub2]]
     * [ ] Last subitem
 * [o] Half done
     * [ ] Subitem 1
@@ -31,6 +31,6 @@ Ordered list:
 4. [X] Also done
 5. [ ] No mark
 
-
-
 A paragraph.
+
+{{sub3}}
