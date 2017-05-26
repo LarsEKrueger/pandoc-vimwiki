@@ -50,8 +50,9 @@ inlineBlocks (Plain s) = do
   return $ Plain $ replacePrefixes ili prefixAndReplacement
 inlineBlocks x = return x
 
-isTransclusion :: String -> Bool
-isTransclusion s = isPrefixOf "{{" s && isSuffixOf "}}" s
+isTransclusion :: Inline -> Bool
+isTransclusion (Str s) = isPrefixOf "{{" s && isSuffixOf "}}" s
+isTransclusion _ = False
 
 extractLink :: String -> String
 extractLink s = drop 2 $ take (length s - 2) s
@@ -95,11 +96,18 @@ handleTransclusion metaRef s = do
        Nothing -> return [Para [Str $ "Error: Could not transclude «" ++ filename ++ "»"]]
        Just blocks -> return blocks
 
-processLinks :: IORef Meta -> Block -> IO [Block]
-processLinks metaRef (Para [Str s]) =
-  if isTransclusion s
+handleTransclusionOrOther :: IORef Meta -> [Inline] -> IO [Block]
+handleTransclusionOrOther metaRef is@[i@(Str s)] =
+  if isTransclusion i
      then handleTransclusion metaRef s
-     else return [Para [Str s]]
+     else return [Para is]
+handleTransclusionOrOther _ is = return [Para is]
+
+processLinks :: IORef Meta -> Block -> IO [Block]
+processLinks metaRef p@(Para inlines) = do
+  let groups = groupBy (\a b -> isTransclusion a == isTransclusion b) inlines
+  bob <- mapM (handleTransclusionOrOther metaRef) groups
+  return $ concat bob
 processLinks _ x = return [x]
 
 concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
