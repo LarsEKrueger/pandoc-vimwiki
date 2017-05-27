@@ -6,5 +6,5 @@ This modules extends pandoc to support certain elements from vimwiki's markup.
 
 * [X] Convert ticked (U+2611) and unticked (U+2610) boxes to unicode characters
 * [X] Handle transclusions using double curly brackets
-* [ ] Handle transclusions using double square brackets
+* [X] Handle linking using double square brackets
 
