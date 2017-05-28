@@ -11,12 +11,12 @@ Bullet list:
 * [ ] Not done.
 * [.] Parially done
     * [ ] Subitem 1 [[sub1]]
-    * [X] Subitem 2 [[sub2]]
+    * [X] Subitem 2 *[[sub2]]*
     * [ ] Last subitem [Local Link](#locallink)
 * [o] Half done
     * [ ] Subitem 1 [[sub1]]
     * [X] Subitem 2
-    * [X] Last subitem
+    * **[X] Last subitem**
 * [O] Almost done
     * [ ] Subitem 1 [[sub1]]
     * [X] Subitem 2

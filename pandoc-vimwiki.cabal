@@ -9,16 +9,20 @@ license:             MIT
 license-file:        LICENSE
 author:              Lars Krueger
 maintainer:          lars_e_krueger@gmx.de
--- copyright:           
+copyright:           (c) 2017 Lars Krueger
+homepage:            https://github.com/LarsEKrueger/pandoc-vimwiki
 category:            Text
 build-type:          Simple
 extra-source-files:  ChangeLog.md, readme.md
 cabal-version:       >=1.10
 
+source-repository this
+  type:     git
+  location: https://github.com/LarsEKrueger/pandoc-vimwiki.git
+  tag: v_0.1.0.0
+
 executable pandoc-vimwiki
   main-is:             Main.hs
-  -- other-modules:       
-  -- other-extensions:    
   build-depends:       base >=4.9 && <4.10,
                        pandoc-types >= 1.16 && < 1.18,
                        bytestring == 0.10.*,
