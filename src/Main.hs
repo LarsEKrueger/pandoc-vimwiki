@@ -122,8 +122,7 @@ justReadFile metaRef fn = bracket (openFile fn ReadMode) hClose $ \handle -> do
 handleTransclusion :: IORef Global -> String -> IO [Block]
 handleTransclusion metaRef s = do
   let filename = extractLink s
-  mbBlocks <- tryFirst extensions $ \ext -> do
-    hPutStrLn stderr $ "Trying to transclude file «" ++ filename ++ ext ++ "»"
+  mbBlocks <- tryFirst extensions $ \ext ->
     catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
   case mbBlocks of
        Nothing -> return [Para [Str $ "Error: Could not transclude «" ++ filename ++ "»"]]
@@ -155,8 +154,7 @@ handleLink metaRef s = do
       ident = inlineListToIdentifier [Str filename]
       links = gLink global
   unless (M.member filename links) $ do
-    mbBlocks <- tryFirst extensions $ \ext -> do
-      hPutStrLn stderr $ "Trying to load link file «" ++ filename ++ ext ++ "»"
+    mbBlocks <- tryFirst extensions $ \ext ->
       catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
     case mbBlocks of
         Nothing -> hPutStrLn stderr $ "Failed to load link file «" ++ filename ++ "»"
