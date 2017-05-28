@@ -73,10 +73,10 @@ There are some limits how the additional items can be used:
   bold. Changing this checkbox is not supported by vimwiki and must be done
   manually.
 * Transclusions must be placed in top-level paragraphs. This has a technical
-  reason [^1] and a use-case reason [^2].
+  reason [1] and a use-case reason [2].
 * Links can be placed anywhere. You can format them.
 * Neither links nor transclusions must contain spaces. This is a limit of the
-  current implementation of this filter [^3], not of pandoc. Pull requests are
+  current implementation of this filter [3], not of pandoc. Pull requests are
   welcome.
 * Transcluded meta information (author, title, date) will be taken from the
   first place they are found. Partial information will be mixed according to
@@ -105,14 +105,14 @@ boxes, create an issue or submit a PR.
 
 # Footnotes
 
-[^1]: Files are composed of `Block`s, a paragraph is a `Block` and
+[1]: Files are composed of `Block`s, a paragraph is a `Block` and
   therefore a file can replace a paragraph. Other things (e.g. bold sections)
   are not blocks and cannot be replaced by a `Block`.
 
-[^2]: You need to transclude other wikis on non-top level positions for two
+[2]: You need to transclude other wikis on non-top level positions for two
   reasons: you want to refer to the same text twice (which can be faked with
   links) or you want to use the text as a template (which makes little sense
   as neither vimwiki nor pandoc have a mechanism to provide parameters for
   these templates; would be a cool feature, though).
 
-[^3]: ~~I can't be bothered to implement it.~~ I don't need it right now.
+[3]: ~~I can't be bothered to implement it.~~ I don't need it right now.
