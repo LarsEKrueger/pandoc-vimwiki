@@ -54,7 +54,7 @@ prefixAndReplacement =
 
 data Global = Global
   { gMeta :: Meta
-  , gLink :: M.Map String Block
+  , gLink :: M.Map String [Block]
   }
 
 -- Replace the first matching prefix
@@ -159,7 +159,7 @@ handleLink metaRef s = do
     case mbBlocks of
         Nothing -> hPutStrLn stderr $ "Failed to load link file «" ++ filename ++ "»"
         Just blocks -> do
-          let newLinks = M.insert filename (Div (ident,[],[]) blocks) links
+          let newLinks = M.insert filename (Div (ident,[],[]) [] : blocks) links
           writeIORef metaRef global { gLink = newLinks }
   return $ Link nullAttr [Str $ filename ++ local] ("#" ++ ident, filename ++ local)
 
@@ -176,7 +176,7 @@ transclude (Pandoc m bs) = do
   transcluded <- concatMapM (processTransclusions metaRef) bs
   linked <- walkM (processLinks metaRef) transcluded
   finalGlobal <- readIORef metaRef
-  return $ Pandoc (gMeta finalGlobal) (linked ++ M.elems (gLink finalGlobal))
+  return $ Pandoc (gMeta finalGlobal) (linked ++ concat ( M.elems (gLink finalGlobal)))
 
 main :: IO ()
 main = do

@@ -12,7 +12,7 @@ Bullet list:
 * [.] Parially done
     * [ ] Subitem 1 [[sub1]]
     * [X] Subitem 2 *[[sub2]]*
-    * [ ] Last subitem [Local Link](#locallink)
+    * [ ] Last subitem
 * [o] Half done
     * [ ] Subitem 1 [[sub1]]
     * [X] Subitem 2
@@ -36,10 +36,6 @@ Ordered list:
 5. [ ] No mark
 
 A paragraph.
-
-<div id="locallink" >
-# Local link
-</div>
 
 {{sub3}}
 {{sub3}}
