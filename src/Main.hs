@@ -54,7 +54,8 @@ prefixAndReplacement =
 
 data Global = Global
   { gMeta :: Meta
-  , gLink :: M.Map String [Block]
+  , gLink :: M.Map String (Int,[Block])
+  , gNextLinkId :: Int
   }
 
 -- Replace the first matching prefix
@@ -159,8 +160,9 @@ handleLink metaRef s = do
     case mbBlocks of
         Nothing -> hPutStrLn stderr $ "Failed to load link file «" ++ filename ++ "»"
         Just blocks -> do
-          let newLinks = M.insert filename (Div (ident,[],[]) [] : blocks) links
-          writeIORef metaRef global { gLink = newLinks }
+          let oldLinkId = gNextLinkId global
+              newLinks = M.insert filename (oldLinkId, Div (ident,[],[]) [] : blocks) links
+          writeIORef metaRef global { gLink = newLinks, gNextLinkId = oldLinkId + 1 }
   return $ Link nullAttr [Str $ filename ++ local] ("#" ++ ident, filename ++ local)
 
 processLinks :: IORef Global -> Inline -> IO Inline
@@ -172,11 +174,13 @@ processLinks _ i = return i
 
 transclude :: Pandoc -> IO Pandoc
 transclude (Pandoc m bs) = do
-  metaRef <- newIORef Global { gMeta = m, gLink = M.empty }
+  metaRef <- newIORef Global { gMeta = m, gLink = M.empty, gNextLinkId = 0 }
   transcluded <- concatMapM (processTransclusions metaRef) bs
   linked <- walkM (processLinks metaRef) transcluded
   finalGlobal <- readIORef metaRef
-  return $ Pandoc (gMeta finalGlobal) (linked ++ concat ( M.elems (gLink finalGlobal)))
+  let sortedFiles = sortOn fst $ M.elems $ gLink finalGlobal
+      sortedBlocks = concatMap snd sortedFiles
+  return $ Pandoc (gMeta finalGlobal) (linked ++ sortedBlocks)
 
 main :: IO ()
 main = do
