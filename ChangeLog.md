@@ -1,5 +1,9 @@
 # Revision history for pandoc-vimwiki
 
+## 0.2.0.0  -- 2017-05-31
+
+* Allow changes to header depths when transcluding/linking
+
 ## 0.1.1.0  -- 2017-05-31
 
 * Bug fix: Linked files are sorted in order of appearance

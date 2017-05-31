@@ -19,7 +19,7 @@ cabal-version:       >=1.10
 source-repository this
   type:     git
   location: https://github.com/LarsEKrueger/pandoc-vimwiki.git
-  tag: v_0.1.1.1
+  tag: v_0.2.0.0
 
 executable pandoc-vimwiki
   main-is:             Main.hs

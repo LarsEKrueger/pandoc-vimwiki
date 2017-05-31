@@ -88,6 +88,11 @@ There are some limits how the additional items can be used:
   found will be read. There is no check for another match. `.mdwiki` can be
   used to distinguish between *regular* markdown and *wikified* markdown using
   `vimwiki-register-extension`. See vimwiki's help for that.
+* Headers in linked and transcluded files can have their depth changed (e.g.
+  each `<h1>` in a transcluded file can be made a `<h3>`).
+  Set the meta-variables [4]  `pandoc-vimwiki-link-header-bump` and/or
+  `pandoc-vimwiki-transclude-header-bump` to a positive integer to increase the
+  depth of the transcluded/linked headers. Negative numbers are not allowed.
 
 # What's missing / next steps
 
@@ -116,3 +121,5 @@ boxes, create an issue or submit a PR.
   these templates; would be a cool feature, though).
 
 [3]: ~~I can't be bothered to implement it.~~ I don't need it right now.
+
+[4]: See [Pandoc User’s Guide](https://pandoc.org/MANUAL.html#metadata-blocks)

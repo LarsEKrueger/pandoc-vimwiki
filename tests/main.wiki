@@ -1,5 +1,7 @@
 ---
 author: The Writer
+pandoc-vimwiki-link-header-bump: 2
+pandoc-vimwiki-transclude-header-bump: 1
 ---
 
 # Vimfile file to test the pandoc-vimwiki filter

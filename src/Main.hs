@@ -56,6 +56,7 @@ data Global = Global
   { gMeta :: Meta
   , gLink :: M.Map String (Int,[Block])
   , gNextLinkId :: Int
+  , gHeaderBump :: (Int,Int)
   }
 
 -- Replace the first matching prefix
@@ -127,7 +128,11 @@ handleTransclusion metaRef s = do
     catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
   case mbBlocks of
        Nothing -> return [Para [Str $ "Error: Could not transclude «" ++ filename ++ "»"]]
-       Just blocks -> return blocks
+       Just blocks -> do
+         global <- readIORef metaRef
+         let (_,headerBump) = gHeaderBump global
+             (Pandoc _ bumpedBlocks ) = headerShift headerBump (Pandoc nullMeta blocks)
+         return bumpedBlocks
 
 handleTransclusionOrOther :: IORef Global -> [Inline] -> IO [Block]
 handleTransclusionOrOther metaRef is@[i@(Str s)] =
@@ -154,6 +159,7 @@ handleLink metaRef s = do
   let (filename,local) = break (== '#') $ extractLink s
       ident = inlineListToIdentifier [Str filename]
       links = gLink global
+      (linkBump,_) = gHeaderBump global
   unless (M.member filename links) $ do
     mbBlocks <- tryFirst extensions $ \ext ->
       catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
@@ -161,7 +167,8 @@ handleLink metaRef s = do
         Nothing -> hPutStrLn stderr $ "Failed to load link file «" ++ filename ++ "»"
         Just blocks -> do
           let oldLinkId = gNextLinkId global
-              newLinks = M.insert filename (oldLinkId, Div (ident,[],[]) [] : blocks) links
+              (Pandoc _ bumpedBlocks ) = headerShift linkBump (Pandoc nullMeta blocks)
+              newLinks = M.insert filename (oldLinkId, Div (ident,[],[]) [] : bumpedBlocks) links
           writeIORef metaRef global { gLink = newLinks, gNextLinkId = oldLinkId + 1 }
   return $ Link nullAttr [Str $ filename ++ local] ("#" ++ ident, filename ++ local)
 
@@ -172,9 +179,17 @@ processLinks metaRef i@(Str s) =
      else return i
 processLinks _ i = return i
 
+readMetaNumber :: String -> Meta -> Int
+readMetaNumber name m =
+  case lookupMeta name m of
+       Just (MetaString s) -> max 0 $ read s
+       _ -> 0
+
 transclude :: Pandoc -> IO Pandoc
 transclude (Pandoc m bs) = do
-  metaRef <- newIORef Global { gMeta = m, gLink = M.empty, gNextLinkId = 0 }
+  let linkBump = readMetaNumber "pandoc-vimwiki-link-header-bump" m
+      transcludeBump = readMetaNumber "pandoc-vimwiki-transclude-header-bump" m
+  metaRef <- newIORef Global { gMeta = m, gLink = M.empty, gNextLinkId = 0, gHeaderBump = (linkBump,transcludeBump) }
   transcluded <- concatMapM (processTransclusions metaRef) bs
   linked <- walkM (processLinks metaRef) transcluded
   finalGlobal <- readIORef metaRef
