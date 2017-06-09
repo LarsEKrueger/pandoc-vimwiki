@@ -35,9 +35,27 @@ Ordered list:
      * [ ] Subitem 4 
 3. [ ] Not done
 4. [X] Also done
-5. [ ] No mark
+5. [ ] No mark and a weird bug
+    when you break lines and
 
-A paragraph.
+    have another paragraph.
+
+    ```class1
+    code
+    block
+    ```
+
+    ```
+code
+block
+    ```
+
+```
+code
+block
+```
+
+[ ] A paragraph.
 
 {{sub3}}
 {{sub3}}

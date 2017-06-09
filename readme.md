@@ -72,6 +72,10 @@ There are some limits how the additional items can be used:
   If you really a check box in the middle of text, you have set a format, e.g.
   bold. Changing this checkbox is not supported by vimwiki and must be done
   manually.
+* Check boxes can be placed at the beginning of any paragraph too, but vimwiki
+  does not support this with *Ctrl-Space*. The reason here is that some bullet
+  lists are paragraphs and this filter cannot easily distinguish between a
+  top-level paragraph and a bullet list paragraph.
 * Transclusions must be placed in top-level paragraphs. This has a technical
   reason [1] and a use-case reason [2].
 * Links can be placed anywhere. You can format them.

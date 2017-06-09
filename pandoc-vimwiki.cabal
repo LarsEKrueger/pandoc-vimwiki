@@ -2,7 +2,7 @@
 -- documentation, see http://haskell.org/cabal/users-guide/
 
 name:                pandoc-vimwiki
-version:             0.1.1.1
+version:             0.2.0.1
 synopsis:            Pandoc filter to support vimwiki-special markup
 description:         Converts checkboxes, transclusions and links
 license:             MIT
@@ -19,7 +19,7 @@ cabal-version:       >=1.10
 source-repository this
   type:     git
   location: https://github.com/LarsEKrueger/pandoc-vimwiki.git
-  tag: v_0.2.0.0
+  tag: v_0.2.0.1
 
 executable pandoc-vimwiki
   main-is:             Main.hs

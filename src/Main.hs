@@ -80,6 +80,9 @@ inlineBlocks :: Block -> IO Block
 inlineBlocks (Plain s) = do
   ili <- mapM inlineItems s
   return $ Plain $ replacePrefixes ili prefixAndReplacement
+inlineBlocks (Para s) = do
+  ili <- mapM inlineItems s
+  return $ Para $ replacePrefixes ili prefixAndReplacement
 inlineBlocks x = return x
 
 isTransclusion :: Inline -> Bool
