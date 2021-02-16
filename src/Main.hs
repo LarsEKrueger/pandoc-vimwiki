@@ -20,7 +20,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 -}
-
+{-# LANGUAGE OverloadedStrings #-}
 module Main
 where
 
@@ -32,7 +32,7 @@ import System.IO
 import System.IO.Error
 import Control.Exception.Base
 import qualified Data.ByteString.Lazy as BL
-import Data.List
+import Data.List as L
 
 import Text.Pandoc
 import Text.Pandoc.Shared
@@ -40,9 +40,11 @@ import Text.Pandoc.Definition
 import Text.Pandoc.Generic
 import Data.Aeson
 import Data.IORef
+import Data.Text as T
 import Data.Map.Lazy as M
+import Data.String
 
-prefixAndReplacement :: [([Inline],String)]
+prefixAndReplacement :: [([Inline],Text)]
 prefixAndReplacement =
   [ ( [Str "[", J.Space, Str "]"] , "☐")
   , ( [Str "[.]"]                 , "▄⃞▄")
@@ -51,20 +53,23 @@ prefixAndReplacement =
   , ( [Str "[X]"]                 , "☑")
   ]
 
+-- Print a string to stderr
+errorMsg :: String -> IO ()
+errorMsg = hPutStrLn stderr
 
 data Global = Global
   { gMeta :: Meta
-  , gLink :: M.Map String (Int,[Block])
+  , gLink :: M.Map Text (Int,[Block])
   , gNextLinkId :: Int
   , gHeaderBump :: (Int,Int)
   }
 
 -- Replace the first matching prefix
-replacePrefixes :: [Inline] -> [([Inline],String)] -> [Inline]
+replacePrefixes :: [Inline] -> [([Inline],Text)] -> [Inline]
 replacePrefixes s [] = s
 replacePrefixes s ((p,r):pars) =
-  if p `isPrefixOf` s
-     then Str r : drop (length p) s
+  if p `L.isPrefixOf` s
+     then Str r : L.drop (L.length p) s
      else replacePrefixes s pars
 
 inlineItems :: Inline -> IO Inline
@@ -86,14 +91,14 @@ inlineBlocks (Para s) = do
 inlineBlocks x = return x
 
 isTransclusion :: Inline -> Bool
-isTransclusion (Str s) = isPrefixOf "{{" s && isSuffixOf "}}" s
+isTransclusion (Str s) = T.isPrefixOf "{{" s && T.isSuffixOf "}}" s
 isTransclusion _ = False
 
-isLink :: String -> Bool
-isLink s = isPrefixOf "[[" s && isSuffixOf "]]" s
+isLink :: Text -> Bool
+isLink s = T.isPrefixOf "[[" s && T.isSuffixOf "]]" s
 
-extractLink :: String -> String
-extractLink s = drop 2 $ take (length s - 2) s
+extractLink :: Text -> Text
+extractLink s = T.drop 2 $ T.take (T.length s - 2) s
 
 extensions :: [String]
 extensions =
@@ -103,6 +108,8 @@ extensions =
   , ".mdwiki"
   ]
 
+
+options = def { readerExtensions = pandocExtensions }
 
 tryFirst :: [a] -> (a -> IO (Maybe b)) -> IO (Maybe b)
 tryFirst [] _ = return Nothing
@@ -116,21 +123,25 @@ justReadFile :: IORef Global -> String -> IO (Maybe [Block])
 justReadFile metaRef fn = bracket (openFile fn ReadMode) hClose $ \handle -> do
   hSetEncoding handle utf8
   cont <- hGetContents handle
-  case readMarkdown def cont of
+  maybeDoc <- runIO $ readMarkdown options (fromString cont)
+  case maybeDoc of
       Left _ -> return Nothing
       Right (Pandoc meta blocks) -> do
         oldGlobal <- readIORef metaRef
         let newMeta = Meta { unMeta = M.union (unMeta $ gMeta oldGlobal) (unMeta meta)}
-        writeIORef metaRef oldGlobal { gMeta = newMeta }
+            newGlobal = oldGlobal { gMeta = newMeta }
+        writeIORef metaRef newGlobal
         return $ Just blocks
 
-handleTransclusion :: IORef Global -> String -> IO [Block]
+handleTransclusion :: IORef Global -> Text -> IO [Block]
 handleTransclusion metaRef s = do
-  let filename = extractLink s
+  let filename = toString $ extractLink s
   mbBlocks <- tryFirst extensions $ \ext ->
     catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
   case mbBlocks of
-       Nothing -> return [Para [Str $ "Error: Could not transclude «" ++ filename ++ "»"]]
+       Nothing -> do
+         errorMsg $ "Error: Could not transclude «" ++ filename ++ "»"
+         return []
        Just blocks -> do
          global <- readIORef metaRef
          let (_,headerBump) = gHeaderBump global
@@ -146,34 +157,35 @@ handleTransclusionOrOther _ is = return [Para is]
 
 processTransclusions :: IORef Global -> Block -> IO [Block]
 processTransclusions metaRef p@(Para inlines) = do
-  let groups = groupBy (\a b -> isTransclusion a == isTransclusion b) inlines
+  let groups = L.groupBy (\a b -> isTransclusion a == isTransclusion b) inlines
   bob <- mapM (handleTransclusionOrOther metaRef) groups
-  return $ concat bob
+  return $ L.concat bob
 processTransclusions _ x = return [x]
 
 concatMapM :: Monad m => (a -> m [b]) -> [a] -> m [b]
 concatMapM f as = do
   bbs <- mapM f as
-  return $ concat bbs
+  return $ L.concat bbs
 
-handleLink :: IORef Global -> String -> IO Inline
+handleLink :: IORef Global -> Text -> IO Inline
 handleLink metaRef s = do
   global <- readIORef metaRef
-  let (filename,local) = break (== '#') $ extractLink s
-      ident = inlineListToIdentifier [Str filename]
+  let (filenameAsText,local) = T.break (== '#') $ extractLink s
+      filename = toString filenameAsText
+      ident = inlineListToIdentifier emptyExtensions [Str filenameAsText]
       links = gLink global
       (linkBump,_) = gHeaderBump global
-  unless (M.member filename links) $ do
+  unless (M.member filenameAsText links) $ do
     mbBlocks <- tryFirst extensions $ \ext ->
       catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
     case mbBlocks of
-        Nothing -> hPutStrLn stderr $ "Failed to load link file «" ++ filename ++ "»"
+        Nothing -> errorMsg $ "Error: Failed to load link file «" ++ filename ++ "»"
         Just blocks -> do
           let oldLinkId = gNextLinkId global
               (Pandoc _ bumpedBlocks ) = headerShift linkBump (Pandoc nullMeta blocks)
-              newLinks = M.insert filename (oldLinkId, Div (ident,[],[]) [] : bumpedBlocks) links
+              newLinks = M.insert filenameAsText (oldLinkId, Div (ident,[],[]) [] : bumpedBlocks) links
           writeIORef metaRef global { gLink = newLinks, gNextLinkId = oldLinkId + 1 }
-  return $ Link nullAttr [Str $ filename ++ local] ("#" ++ ident, filename ++ local)
+  return $ Link nullAttr [Str $ T.append filenameAsText local] (T.append "#" ident, T.append filenameAsText local)
 
 processLinks :: IORef Global -> Inline -> IO Inline
 processLinks metaRef i@(Str s) =
@@ -182,10 +194,10 @@ processLinks metaRef i@(Str s) =
      else return i
 processLinks _ i = return i
 
-readMetaNumber :: String -> Meta -> Int
+readMetaNumber :: Text -> Meta -> Int
 readMetaNumber name m =
   case lookupMeta name m of
-       Just (MetaString s) -> max 0 $ read s
+       Just (MetaString s) -> max 0 $ read $ toString s
        _ -> 0
 
 transclude :: Pandoc -> IO Pandoc
@@ -197,8 +209,9 @@ transclude (Pandoc m bs) = do
   linked <- walkM (processLinks metaRef) transcluded
   finalGlobal <- readIORef metaRef
   let sortedFiles = sortOn fst $ M.elems $ gLink finalGlobal
-      sortedBlocks = concatMap snd sortedFiles
-  return $ Pandoc (gMeta finalGlobal) (linked ++ sortedBlocks)
+      sortedBlocks = L.concatMap snd sortedFiles
+      finalMeta = gMeta finalGlobal
+  return $ Pandoc finalMeta (linked ++ sortedBlocks)
 
 main :: IO ()
 main = do
