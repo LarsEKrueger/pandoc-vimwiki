@@ -1,4 +1,6 @@
-# Introduction
+# pandoc-vimwiki: A pandoc filter to emulate vimwiki
+
+## Introduction
 
 This module provides a filter for [pandoc](https://www.pandoc.org) to support certain
 elements from [vimwiki](https://vimwiki.github.io)'s markup. Due to the
@@ -11,6 +13,29 @@ In particular, the following elements will converted:
 * transclusions using double curly brackets
 * linking to external wiki pages using double square brackets, including
   anchors
+
+## Installation
+
+This module is compatible with pandoc 2.11 and stack lts-17.4.
+
+### Prerequisistes
+
+* A working [Haskell installation](https://www.haskell.org/), either via
+  [cabal](https://www.haskell.org/downloads/#platform) or
+  [stack](https://www.haskell.org/downloads/#stack)
+
+### Build and install
+
+* Get the source code. Either
+  * clone this repository or
+  * download and extract the ZIP
+* Go to the source code directory
+* Run either
+  * `cabal install` or
+  * `stack init` followed by `stack install`
+
+The installation might take some time due to the size and number of
+dependencies.
 
 # Example
 

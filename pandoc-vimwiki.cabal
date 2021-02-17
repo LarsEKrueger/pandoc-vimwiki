@@ -1,5 +1,5 @@
 name:                pandoc-vimwiki
-version:             0.2.0.1
+version:             0.3.0.0
 synopsis:            Pandoc filter to support vimwiki-special markup
 description:         Converts checkboxes, transclusions and links
 license:             MIT
@@ -16,7 +16,7 @@ cabal-version:       >=1.10
 source-repository this
   type:     git
   location: https://github.com/LarsEKrueger/pandoc-vimwiki.git
-  tag: v_0.2.0.1
+  tag: v_0.3.0.0
 
 executable pandoc-vimwiki
   main-is:             Main.hs
