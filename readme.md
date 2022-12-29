@@ -16,7 +16,7 @@ In particular, the following elements will converted:
 
 ## Installation
 
-This module is compatible with pandoc 2.11 and stack lts-17.4.
+This module is compatible with pandoc 2.19 and stack lts-18.28.
 
 ### Prerequisistes
 
