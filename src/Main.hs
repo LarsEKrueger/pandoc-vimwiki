@@ -123,7 +123,7 @@ justReadFile :: IORef Global -> String -> IO (Maybe [Block])
 justReadFile metaRef fn = bracket (openFile fn ReadMode) hClose $ \handle -> do
   hSetEncoding handle utf8
   cont <- hGetContents handle
-  maybeDoc <- runIO $ readMarkdown options (fromString cont)
+  maybeDoc <- runIO $ readMarkdown options (pack $ fromString cont)
   case maybeDoc of
       Left _ -> return Nothing
       Right (Pandoc meta blocks) -> do
@@ -135,7 +135,7 @@ justReadFile metaRef fn = bracket (openFile fn ReadMode) hClose $ \handle -> do
 
 handleTransclusion :: IORef Global -> Text -> IO [Block]
 handleTransclusion metaRef s = do
-  let filename = toString $ extractLink s
+  let filename = unpack $ extractLink s
   mbBlocks <- tryFirst extensions $ \ext ->
     catchIOError (justReadFile metaRef $ filename ++ ext) (\_ -> return Nothing)
   case mbBlocks of
@@ -171,7 +171,7 @@ handleLink :: IORef Global -> Text -> IO Inline
 handleLink metaRef s = do
   global <- readIORef metaRef
   let (filenameAsText,local) = T.break (== '#') $ extractLink s
-      filename = toString filenameAsText
+      filename = unpack filenameAsText
       ident = inlineListToIdentifier emptyExtensions [Str filenameAsText]
       links = gLink global
       (linkBump,_) = gHeaderBump global
@@ -197,7 +197,7 @@ processLinks _ i = return i
 readMetaNumber :: Text -> Meta -> Int
 readMetaNumber name m =
   case lookupMeta name m of
-       Just (MetaString s) -> max 0 $ read $ toString s
+       Just (MetaString s) -> max 0 $ read $ unpack s
        _ -> 0
 
 transclude :: Pandoc -> IO Pandoc
