@@ -1,5 +1,5 @@
 name:                pandoc-vimwiki
-version:             0.3.1.0
+version:             0.3.2.0
 synopsis:            Pandoc filter to support vimwiki-special markup
 description:         Converts checkboxes, transclusions and links
 license:             MIT
@@ -16,16 +16,16 @@ cabal-version:       >=1.10
 source-repository this
   type:     git
   location: https://github.com/LarsEKrueger/pandoc-vimwiki.git
-  tag: v_0.3.1.0
+  tag: v_0.3.2.0
 
 executable pandoc-vimwiki
   main-is:             Main.hs
   build-depends:       base >=4 && <5,
-                       pandoc-types == 1.22.*,
-                       bytestring == 0.10.*,
-                       aeson == 1.5.*,
-                       pandoc >= 2.11,
-                       text == 1.2.*,
+                       pandoc-types == 1.23.*,
+                       bytestring >= 0.10,
+                       aeson >= 1.5,
+                       pandoc >= 3.1,
+                       text >= 1.2,
                        containers >= 0.5
   hs-source-dirs:      src
   default-language:    Haskell2010
